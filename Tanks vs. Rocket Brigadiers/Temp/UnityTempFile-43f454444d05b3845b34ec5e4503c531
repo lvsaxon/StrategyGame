@@ -1,0 +1,131 @@
+-debug
+-target:library
+-nowarn:0169
+-out:Temp/Assembly-CSharp.dll
+-r:"C:/Program Files/Unity/Editor/Data/Managed/UnityEngine.dll"
+-r:"C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll"
+-r:"C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll"
+-r:"C:/Program Files/Unity/Editor/Data/Managed/UnityEditor.dll"
+-define:UNITY_5_3_2
+-define:UNITY_5_3
+-define:UNITY_5
+-define:ENABLE_NEW_BUGREPORTER
+-define:ENABLE_AUDIO
+-define:ENABLE_CACHING
+-define:ENABLE_CLOTH
+-define:ENABLE_DUCK_TYPING
+-define:ENABLE_FRAME_DEBUGGER
+-define:ENABLE_GENERICS
+-define:ENABLE_HOME_SCREEN
+-define:ENABLE_IMAGEEFFECTS
+-define:ENABLE_LIGHT_PROBES_LEGACY
+-define:ENABLE_MICROPHONE
+-define:ENABLE_MULTIPLE_DISPLAYS
+-define:ENABLE_PHYSICS
+-define:ENABLE_PLUGIN_INSPECTOR
+-define:ENABLE_SHADOWS
+-define:ENABLE_SINGLE_INSTANCE_BUILD_SETTING
+-define:ENABLE_SPRITERENDERER_FLIPPING
+-define:ENABLE_SPRITES
+-define:ENABLE_SPRITE_POLYGON
+-define:ENABLE_TERRAIN
+-define:ENABLE_RAKNET
+-define:ENABLE_UNET
+-define:ENABLE_UNITYEVENTS
+-define:ENABLE_WEBCAM
+-define:ENABLE_WWW
+-define:ENABLE_CLOUD_SERVICES
+-define:ENABLE_CLOUD_SERVICES_ADS
+-define:ENABLE_CLOUD_HUB
+-define:ENABLE_CLOUD_PROJECT_ID
+-define:ENABLE_CLOUD_SERVICES_PURCHASING
+-define:ENABLE_CLOUD_SERVICES_ANALYTICS
+-define:ENABLE_CLOUD_SERVICES_UNET
+-define:ENABLE_CLOUD_SERVICES_BUILD
+-define:ENABLE_CLOUD_LICENSE
+-define:ENABLE_EDITOR_METRICS
+-define:ENABLE_EDITOR_METRICS_CACHING
+-define:INCLUDE_DYNAMIC_GI
+-define:INCLUDE_GI
+-define:INCLUDE_IL2CPP
+-define:INCLUDE_DIRECTX12
+-define:PLATFORM_SUPPORTS_MONO
+-define:RENDER_SOFTWARE_CURSOR
+-define:ENABLE_LOCALIZATION
+-define:ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION
+-define:ENABLE_EDITOR_TESTS_RUNNER
+-define:UNITY_WEBPLAYER
+-define:ENABLE_SUBSTANCE
+-define:WEBPLUG
+-define:ENABLE_TEXTUREID_MAP
+-define:ENABLE_RUNTIME_GI
+-define:ENABLE_MOVIES
+-define:ENABLE_NETWORK
+-define:ENABLE_CRUNCH_TEXTURE_COMPRESSION
+-define:ENABLE_MONO
+-define:ENABLE_PROFILER
+-define:DEBUG
+-define:TRACE
+-define:UNITY_ASSERTIONS
+-define:UNITY_EDITOR
+-define:UNITY_EDITOR_64
+-define:UNITY_EDITOR_WIN
+Assets/BehavioralAnimationStates.cs
+Assets/Look.cs
+"Assets/Pathfinder Scripts/Scenes/Scripts/AI.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/GridPlayer.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/GridPlayer2D.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/Lines.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/SearchPlayerAI.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/SetGrid.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/SimpleAI.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/SimpleAI2D.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/TDEnemy.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/TDManager.cs"
+"Assets/Pathfinder Scripts/Scenes/Scripts/WaypointPlayer.cs"
+"Assets/Pathfinder Scripts/Scripts/DynamicMapUpdate.cs"
+"Assets/Pathfinder Scripts/Scripts/DynamicTDGridObject.cs"
+"Assets/Pathfinder Scripts/Scripts/NodeSearch.cs"
+"Assets/Pathfinder Scripts/Scripts/Nodes.cs"
+"Assets/Pathfinder Scripts/Scripts/Pathfinder.cs"
+"Assets/Pathfinder Scripts/Scripts/Pathfinder2D.cs"
+"Assets/Pathfinder Scripts/Scripts/Pathfinding.cs"
+"Assets/Pathfinder Scripts/Scripts/Pathfinding2D.cs"
+"Assets/Pathfinder Scripts/Scripts/QueuePath.cs"
+"Assets/Pathfinder Scripts/Scripts/WaypointListNode.cs"
+"Assets/Pathfinder Scripts/Scripts/WaypointNode.cs"
+"Assets/Pathfinder Scripts/Scripts/WaypointPathfinder.cs"
+Assets/Scripts/DetectObstacle.cs
+Assets/Scripts/FormationList.cs
+"Assets/Scripts/Game Manager Scripts/RespawnManager.cs"
+"Assets/Scripts/Game Manager Scripts/RocketScore.cs"
+"Assets/Scripts/Game Manager Scripts/SoldierSpawn_CheckPoint.cs"
+"Assets/Scripts/Game Manager Scripts/TankScore.cs"
+"Assets/Scripts/Game Manager Scripts/TankSpawn_CheckPoint.cs"
+"Assets/Scripts/Game Manager Scripts/Timer.cs"
+"Assets/Scripts/Pathfinding Scripts/HeapNodeSort.cs"
+"Assets/Scripts/Pathfinding Scripts/NavigationGridMap.cs"
+"Assets/Scripts/Pathfinding Scripts/Node.cs"
+"Assets/Scripts/Pathfinding Scripts/PathFinding.cs"
+"Assets/Scripts/Pathfinding Scripts/PathRequestManager.cs"
+"Assets/Scripts/Pathfinding Scripts/Units.cs"
+"Assets/Scripts/Soldier Scripts/SoldierCoordinator.cs"
+"Assets/Scripts/Soldier Scripts/SoldierFollower.cs"
+"Assets/Scripts/Soldier Scripts/SoldierFormationManager.cs"
+"Assets/Scripts/Soldier Scripts/SoldierHealth.cs"
+"Assets/Scripts/Soldier Scripts/SoldierMovement.cs"
+"Assets/Scripts/Soldier Scripts/SoldierShooting.cs"
+"Assets/Scripts/Soldier Scripts/SoldierSquadronControl.cs"
+"Assets/Scripts/Soldier Scripts/Soldier_FieldOfView.cs"
+"Assets/Scripts/Soldier Scripts/Soldier_ShootingDamage.cs"
+"Assets/Scripts/Tank Scripts/TankCoordinator.cs"
+"Assets/Scripts/Tank Scripts/TankFollowPath.cs"
+"Assets/Scripts/Tank Scripts/TankFormationManager.cs"
+"Assets/Scripts/Tank Scripts/TankHealth.cs"
+"Assets/Scripts/Tank Scripts/TankShooting.cs"
+"Assets/Scripts/Tank Scripts/TankSquadronControl.cs"
+"Assets/Scripts/Tank Scripts/Tank_AmmunitionRounds.cs"
+"Assets/Scripts/Tank Scripts/Tank_FieldOfView.cs"
+"Assets/Scripts/Tank Scripts/Tank_Follower.cs"
+Assets/Scripts/TerrainBoundary.cs
+Assets/SeekTarget.cs

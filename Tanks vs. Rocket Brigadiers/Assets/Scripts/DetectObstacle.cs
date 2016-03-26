@@ -3,7 +3,7 @@ using System.Collections;
 
 public class DetectObstacle : MonoBehaviour {
 
-    Rigidbody rigidbody;
+    new Rigidbody rigidbody;
 
     void Start() {
         rigidbody = GetComponent<Rigidbody>();

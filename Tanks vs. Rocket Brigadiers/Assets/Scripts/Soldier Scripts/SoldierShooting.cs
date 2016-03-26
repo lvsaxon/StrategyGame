@@ -1,15 +1,13 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class SoldierShooting : MonoBehaviour {
+[System.Serializable]
+public class SoldierShooting {
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    public float rateOfFire;
+    public Transform shotSpawn;
+    public GameObject shotObject;
+    
+    [Range(0, 20)]
+    public int shootingSpeed;
+
 }
