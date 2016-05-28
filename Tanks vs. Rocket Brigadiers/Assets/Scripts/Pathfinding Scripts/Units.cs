@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using System.Linq;
 using System.Collections;
-using System.Collections.Generic;
 
 
 public class Units: MonoBehaviour {
@@ -13,32 +11,30 @@ public class Units: MonoBehaviour {
     public float movementSpeed;
     [Range(1, 5)]
     public float rotationSpeed;
-
+    
     Vector3[] path;   
-    Vector3 closestTarget;    
     int targetIndx, health;
+    Vector3 closestTarget, currWaypoint;
     GameObject[] soldiers, tanks, targets;
-    GameObject gameManager;
-
+    
+    float dist;
+    Vector3 previous;
     Animator animator;
-    NavigationGridMap gridMap;
     
 
     void Start() {
-
+        
         if(gameObject.tag == "Tank"){
            soldiers = GameObject.FindGameObjectsWithTag("Rocket Brigadier");
            targets = soldiers;
         }
 
         if(gameObject.tag == "Rocket Brigadier"){
+           animator = GetComponent<Animator>();
            tanks = GameObject.FindGameObjectsWithTag("Tank");
+           animator.SetBool("IsSprinting", true);
            targets = tanks;
         }
-
-        gameManager = GameObject.FindGameObjectWithTag("Game Manager");
-        gridMap = gameManager.GetComponent<NavigationGridMap>();
-        animator = GetComponent<Animator>();
     }
 
 
@@ -83,14 +79,11 @@ public class Units: MonoBehaviour {
                currWaypoint = path[targetIndx];
             }
 
-            if(animator)
-               animator.SetBool("IsSprinting", true);
-
             Vector3 targetPosition = currWaypoint;
             Quaternion targetRotation = Quaternion.LookRotation(targetPosition - transform.position, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);            
             transform.position = Vector3.MoveTowards(transform.position, currWaypoint, movementSpeed * Time.deltaTime);
-                      
+            
             yield return null;
         }
     }
@@ -122,14 +115,10 @@ public class Units: MonoBehaviour {
     }
 
 
-    /* Determine if Target is inBounds */
-    bool isTargetInBounds(Transform soldier) {
+    /* Begin Strafing Coroutine */
+    public void StartStrafing(int count) {
 
-        if((soldier.position.x >= 1 && soldier.position.x < gridMap.gridSize.x) && 
-           (soldier.position.z >= 1 && soldier.position.z < gridMap.gridSize.y))
-            return true;
-        else
-            return false;
+        StartCoroutine("Strafing", count);        
     }
 
 
@@ -142,9 +131,9 @@ public class Units: MonoBehaviour {
                 Gizmos.DrawCube(path[i], Vector3.one);
 
                 if(i == targetIndx) 
-                    Gizmos.DrawLine(transform.position, path[i]);
+                   Gizmos.DrawLine(transform.position, path[i]);
                 else
-                    Gizmos.DrawLine(path[i-1], path[i]);
+                   Gizmos.DrawLine(path[i-1], path[i]);
             }
         }
     }

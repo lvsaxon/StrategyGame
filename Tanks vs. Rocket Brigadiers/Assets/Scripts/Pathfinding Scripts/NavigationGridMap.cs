@@ -53,7 +53,7 @@ public class NavigationGridMap : MonoBehaviour {
     void CreateNodeGrid() {
         int movementPenalty = 0;
         nodes = new Node[gridSizeX, gridSizeY];
-        Vector3 gridOrigin = transform.position - Vector3.right * gridSize.x/2 - Vector3.forward * gridSize.y/2;//Vector3.zero;
+        Vector3 gridOrigin = transform.position - Vector3.right * gridSize.x/2 - Vector3.forward * gridSize.y/2;
 
         //Create Node Positions
         for(int x=0; x<gridSizeX; x++){

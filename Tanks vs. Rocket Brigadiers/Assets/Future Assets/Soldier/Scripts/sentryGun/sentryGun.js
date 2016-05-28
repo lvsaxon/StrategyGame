@@ -71,6 +71,8 @@ function Update (){
 	if(bulletTraceGeneratorScript.on){
 		GetComponent.<Rigidbody>().AddForceAtPosition(bulletTraceGenerator.up* Time.deltaTime * Random.value * 1900, bulletTraceGenerator.position) ;
 	}
+
+    //Respawn
 	if(sentryHealth <= 0 && exploded == false){//Explosion.
 		exploded = true;
 		Instantiate(explosionPrefab,pitch.position,pitch.rotation);
@@ -78,6 +80,8 @@ function Update (){
 		var newBlackSmoke : GameObject = Instantiate(blackSmokePrefab,pitch.position,pitch.rotation);
 		newBlackSmoke.transform.parent = transform;
 	}
+
+
 	if(barrel.position.y < transform.position.y + 0.2 || sentryHealth == 0){
 		GetComponent.<Collider>().enabled = false;
 		base.GetComponent.<Collider>().enabled = true;
@@ -96,7 +100,8 @@ function Update (){
 		sentryAI();
 	}
 	rotator.localRotation.eulerAngles.z += rotatorSpeed * Time.deltaTime;
-	//Pitch Angle.
+	
+    //Pitch Angle.
 	if(sentryHealth > 0){ //Alive.
 		pitchAngle = 4.0;
 	}
@@ -129,7 +134,7 @@ function sentryAI(){
 				}
 			}
 			if(isTarget){
-				foundTarget = true; //If what's ahead is a target.
+				foundTarget = true; //Target is Found
 				lastTargetfoundTime = Time.time;
 				if(targetTransform == null){
 					targetTransform = hit.transform; //This is the target.

@@ -4,9 +4,6 @@
 public class TankShooting {
 
 	public float rateOfFire;
-    public Transform shotSpawn;
+    public Transform[] shotSpawns;
     public GameObject shotObject;
-
-    [Range(0, 20)]
-    public int shootingSpeed;
 }

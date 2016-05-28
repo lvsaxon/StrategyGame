@@ -3,14 +3,14 @@ using System.Collections;
 
 public class Look : MonoBehaviour {
 
-    SphereCollider r;
-    int fullView = 90, count = 0;
+    public float speed;
+
+    int fullView = 90;
     Vector3 targetPos;
-    bool look, grow, rotate;
+    bool look, rotate;
 
     void Start() {
         targetPos = new Vector3();
-        grow = true;
     }
 
 	void Update () {
@@ -19,16 +19,14 @@ public class Look : MonoBehaviour {
         Ray ray = new Ray(transform.position, transform.forward);
         Debug.DrawRay(ray.origin, transform.forward*20, Color.red);
 
-        //Grow Collider
-        if(grow)
-           Grow();
-
         //Rotate Obj
         if(rotate && targetPos != new Vector3()) { 
             Vector3 targetPosition = targetPos;
             Quaternion targetRotation = Quaternion.LookRotation(targetPosition - transform.position, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 3f);
         }
+
+    
 
 
         float angle = Vector3.Angle(transform.position, targetPos);
@@ -47,7 +45,7 @@ public class Look : MonoBehaviour {
     void OnCollisionEnter(Collision col) {
 
         if(col.collider.tag == "Tank") {
-           //look = true;
+           
         }
     }
 
@@ -55,28 +53,89 @@ public class Look : MonoBehaviour {
     void OnTriggerStay(Collider col) {
         
         if(col.tag == "Tank") {
-           targetPos = col.transform.position;
-           rotate = true;
-           print("Total: "+count);
+           
         }
-        
     }
 
     void OnTriggerEnter(Collider col) {
         
         if(col.tag == "Tank"){
-            Physics.IgnoreCollision(GetComponent<SphereCollider>(), col);
-            grow = false;
            
         }
     }
+}
 
 
-    void Grow() {
 
-            r = GetComponent<SphereCollider>();
-            r.radius *= Time.deltaTime+1f;
-        
-        
+
+/*--------------------------------------------------SOUND CREATION && EXTRA CODE -------------------------------------------------------------*/
+
+#region Agents/Leader Calling Followers or Help Sound Code
+/*public float speed;
+
+SphereCollider r;
+public int soundCount;
+float originalRad;
+bool grow;
+
+void Start() {
+    r = GetComponent<SphereCollider>();
+    grow = true;
+    originalRad = r.radius;
+    soundCount = 0;
+}
+
+void Update () {
+
+    //Grow Collider
+    if(grow)
+       Grow();
+    else 
+        StartCoroutine("SoundWaves");
+
+}
+
+
+IEnumerator SoundWaves() {
+    yield return null;
+
+    r.radius = originalRad;
+    grow = true;
+}
+
+
+void OnTriggerEnter(Collider col) {
+
+    if(col.tag == "TagName"){
+       grow = false;
+       soundCount++;
     }
 }
+
+
+void Grow() {
+
+    r.radius *= Time.deltaTime+speed;
+}*/
+
+#endregion
+
+
+#region PowerUp Sound
+    /*new AudioSource audio;
+
+    void Start() {
+        audio = GetComponent<AudioSource>();
+        StartCoroutine("PlayClip", 4);
+    }
+
+    IEnumerator PlayClip(int count) {
+       
+
+        for(int i=0; i<count; i++) {
+            
+            audio.PlayOneShot(audio.clip, 1);
+            yield return new WaitForSeconds(audio.clip.length);
+        }
+    }*/
+#endregion

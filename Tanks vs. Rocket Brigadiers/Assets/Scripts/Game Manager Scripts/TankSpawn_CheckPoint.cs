@@ -40,7 +40,7 @@ public class TankSpawn_CheckPoint : MonoBehaviour {
     
 
     /* Check for Any Targets or Shots within the Collider */
-    void OnTriggerEnter(Collider collid) {
+    void OnTriggerStay(Collider collid) {
 
         if(collid.tag == "Rocket" || collid.tag == "Rocket Brigadier"){
            StopCoroutine("RespawnDuration");

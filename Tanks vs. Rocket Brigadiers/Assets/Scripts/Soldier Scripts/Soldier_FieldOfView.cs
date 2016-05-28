@@ -4,37 +4,46 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-public class Soldier_FieldOfView : MonoBehaviour {
+public class Soldier_FieldOfView: MonoBehaviour {
 
-    [Range(0, 100)]
+    [Range(0, 200)]
     public float lookDistance;
-
     [Range(90, 180)]
     public float fullAngleView = 150f;
 
-    public float lookingSpeed;
+    public float lookingSpeed, rayHeight;
     public LayerMask targetMask;
     public SoldierShooting soldierShooting;
     public bool showRaycast;
 
-    int currHealth; 
-    float soundLength;
-    float nextFire, angle;
+    int currHealth;     
     Vector3 targetPos, enemyFirePos;
+    float nextFire, angle, maxRotationSpd;
+    float soundLength, accelerationLookingSpd;
     bool locateTarget, startShooting, gettingDamaged;
-
-    bool lockedOn, inShootingRange;
     
-    Units units;
+    new AudioSource audio;
+    new Rigidbody rigidbody;
+    Queue<Transform> nextTarget;
+    GameObject[] tanks, soldiers, tturrets;
+    bool inRange, strafe;
+    
+    Timer timer;
+    TDEnemy units;
     Transform leader;
     Animator animator;
     List<Transform> followers;
-    GameObject[] tanks, soldiers;
+    
+    int damageIncres = 0;
+    float damageIncres_MaxTime = 7f;
+    PowerUpLocationManager powerUpLocationManager; /* Health, Incres Power, Shield */
 
 
     void Awake() {
-        tanks = GameObject.FindGameObjectsWithTag("Tank");
         followers = new List<Transform>();
+        nextTarget = new Queue<Transform>();
+        tanks = GameObject.FindGameObjectsWithTag("Tank");
+        tturrets = GameObject.FindGameObjectsWithTag("TTurret");
 
         soldiers = GameObject.FindGameObjectsWithTag("Rocket Brigadier");
         foreach(GameObject soldier in soldiers){ 
@@ -47,130 +56,189 @@ public class Soldier_FieldOfView : MonoBehaviour {
 
 
     void Start() {
+        maxRotationSpd = 6f;
+        accelerationLookingSpd = 2.5f;
         enemyFirePos = new Vector3();
-        units = GetComponent<Units>();
+        units = GetComponent<TDEnemy>();
         animator = GetComponent<Animator>();
 
-        //Destroy Invisble Objects
-        /*for(int i=1; i<soldiers.Length; i++) {
-            Destroy(soldiers[0]);
-        }*/
+        audio = GetComponent<AudioSource>();        
+        rigidbody = GetComponent<Rigidbody>();
+        timer = GameObject.FindGameObjectWithTag("Game Manager").GetComponent<Timer>();
+        powerUpLocationManager = GameObject.FindGameObjectWithTag("Game Manager").GetComponent<PowerUpLocationManager>();
+        
+        //Destroy Invisible Objects
+        Debug.Log("Soldiers: "+soldiers.Length);
+        /*for(int i=0; i<soldiers.Length; i++){
+             Destroy(soldiers[i]);
+        } Debug.Log(soldiers.Length);  */   
     }
 
 
-    void Update() {
-
+    void FixedUpdate() {
         RaycastHit hit;
-        setChosenTarget(ClosestTarget());
+        targetPos = ClosestTarget();
         currHealth = GetComponent<SoldierHealth>().currentHealth;
-        Ray ray = new Ray(transform.position, transform.forward);
+        Ray ray = new Ray(transform.position+Vector3.up*rayHeight, transform.forward);
         
         if(showRaycast)
            Debug.DrawRay(soldierShooting.shotSpawn.position, ray.direction*lookDistance, Color.magenta);
 
-        if(locateTarget)
-           LocateTarget();
-        
-        if(startShooting)
-           StartShooting();
+        if(timer.TimeLeft > 0){
+           
+            if(locateTarget)
+               LocateTarget();
 
-        if(gettingDamaged && enemyFirePos != new Vector3() && !startShooting){
-           GettingDamaged(enemyFirePos);
-        }
+            /*if(strafe)
+               units.StartStrafing(3);*/
 
-
-        if(currHealth > 0){
-            foreach(GameObject tank in tanks){ 
-             
-                if(tanks != null){
-                    Vector3 direction = targetPos - transform.position;
-                    angle = Vector3.Angle(direction, transform.forward);
-                
-                    //Check if target is <= 1/2 of Field View Angle
-                    if(angle <= (fullAngleView/2f) && tank && isTargetOnMap(ClosestTarget())){
-                        
-                        //Looking Distance
-                        if(Physics.Raycast(ray.origin, direction.normalized, out hit, lookDistance, targetMask)){
-                             
-                            //Obstacle is hit; Maneuvour around it
-                            if(hit.collider.tag == "Obstacle"){
-                               locateTarget = false;
-                               startShooting = false;
-                            }
-                        
-                            //Target is Found & Health > 0
-                            if(hit.collider.tag == "Tank"){
-
-                                if(tank.GetComponent<TankHealth>().currentHealth > 0){
-                                   locateTarget = true;
-                               
-                                   //Start shooting when < Randomize (1/4 || 1/8 || 1/5) Field View & Come to a complete Stop
-                                   Vector3 distance = new Vector3(transform.position.x-targetPos.x, 0, transform.position.z - targetPos.z);
-                                   if(angle < (fullAngleView/3.8f) && distance.sqrMagnitude <= Mathf.Pow(lookDistance, 2)){ 
-                                      AnimationStates("ReadyToFire");
-                                      
-                                      //Lock on Target
-                                      if(angle <= 0.5f)
-                                         lockedOn = true;
-                                      else
-                                         lockedOn = false;
-
-                                   }else{
-                                      AnimationStates("Idle");
-                                   }
-
-                                //Stop Shooting when Target is Destroyed
-                                }else if(tank.GetComponent<TankHealth>().currentHealth <= 0){
-                                   return;
-                                }                             
-                            }
-                        }
-                    }
-
-                    //Turn to Target Inside Blind Spot
-                    if(angle > (fullAngleView/2)){
-                       locateTarget = true;
-                    }
-
-                //No Targets Present
-                }else return;
+            if(units.enabled){ 
+               animator.SetBool("IsSprinting", true);
+               if(inRange){
+                  setAnimationState("ReadyToFire");
+                  if(startShooting)
+                     StartCoroutine("StartShooting");
+               }
+            }else
+               setAnimationState("Idle");
+            
+            if(gettingDamaged && enemyFirePos != new Vector3() && !startShooting){
+                GettingDamaged(enemyFirePos);
             }
 
-        //Stop Every Behavior when Health <= 0
+
+            if(currHealth > 0){
+                foreach(GameObject tank in tanks){ 
+                    Vector3 direction = targetPos - transform.position;
+                    angle = Vector3.Angle(direction, transform.forward);
+
+                    if(Physics.Raycast(ray.origin, direction.normalized, out hit, lookDistance, targetMask)){
+                        
+                        //Obstacle is hit; Maneuvour around it
+                        if(hit.collider.tag != "Tank"){
+                           locateTarget = false;
+                           inRange = false;
+                        }
+
+                        if(hit.collider.tag == "TTurret") {
+                           if(hit.collider.GetComponent<Tank_AutoTurret>() && hit.collider.GetComponent<Tank_AutoTurret>().currHealth > 0) {
+                              locateTarget = true;
+
+                              if(angle < (fullAngleView * 0.2f))
+                                 inRange = true;                             
+                            }
+                        }
+                        
+                        //Target is Found & Health > 0
+                        if(hit.collider.tag == "Tank"){
+                           if(tank.GetComponent<TankHealth>().currentHealth > 0){
+                              locateTarget = true;
+                               
+                               //Start shooting when < Randomize (1/4 || 1/8 || 1/5) Field View & Come to a complete Stop
+                               float distance = Vector3.Distance(transform.position, targetPos);
+                               if(angle < (fullAngleView * 0.2f) && (distance < lookDistance)){
+                                  inRange = true;                             
+                               }
+                           }                            
+                       }
+                    }else{
+                       inRange = false;
+                       locateTarget = false;
+                    }
+                }
+
+            //Stop Every Behavior when Health <= 0
+            }else
+               SuspendAllBehaviors();
         }else
-            SuspendAllBehaviors();
+            GameOver();
     }
 
-    
+
     /* Target Has been Located */
     void LocateTarget() {
-
-        Vector3 targetPosition = ClosestTarget();
+        
+        Vector3 targetPosition = targetPos;
         Quaternion targetRotation = Quaternion.LookRotation(targetPosition - transform.position, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * lookingSpeed);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime * lookingSpeed);
+        transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, 0f);
 
-        if(lockedOn){
-           transform.eulerAngles = new Vector3(targetRotation.eulerAngles.x, targetRotation.eulerAngles.y, 0);
-        }
+        if(angle <= 3f)
+           transform.LookAt(new Vector3(targetPosition.x, transform.position.y, targetPosition.z));
     }
 
 
     /* Start Shooting at Target */
-    void StartShooting() {
+    IEnumerator StartShooting() {
         
-        if(Time.time > nextFire){ 
-           nextFire = Time.time + soldierShooting.rateOfFire;
-           GameObject shot = Instantiate(soldierShooting.shotObject, soldierShooting.shotSpawn.position, soldierShooting.shotSpawn.rotation) as GameObject;
-           shot.GetComponent<Rigidbody>().velocity = transform.forward * soldierShooting.shootingSpeed;
+        while(Time.time > nextFire){ 
+              nextFire = Time.time + Random.Range(soldierShooting.rateOfFire-0.2f, soldierShooting.rateOfFire);
+              audio.PlayOneShot(soldierShooting.rifleAudio, 0.25f);
+              Instantiate(soldierShooting.shotFlare, soldierShooting.shotSpawn.position, Quaternion.identity);
+
+              //Bullet Object
+              GameObject bullet = Instantiate(soldierShooting.shotObject, soldierShooting.shotSpawn.position, soldierShooting.shotSpawn.rotation) as GameObject;
+              bullet.GetComponent<Soldier_ShootingDamage>().setParentObject(transform);
+              bullet.GetComponent<Rigidbody>().velocity = transform.forward * soldierShooting.shootingSpeed;
+
+              //Temporary Damage Incres PowerUp
+              if(damageIncres > 0 && Time.deltaTime <= damageIncres_MaxTime)
+                 bullet.GetComponent<Soldier_ShootingDamage>().IncreaseDamage(damageIncres);
+              else{ 
+                 damageIncres = 0;
+                 bullet.GetComponent<Soldier_ShootingDamage>().DefaultDamage();
+              }
+           
+              yield return null;
         }
     }
 
-    
-    /* Look At Target Nearest to You */
-    Vector3 ClosestTarget() {
 
-        Transform target = tanks.OrderBy(tank => Vector3.Distance(tank.transform.position, transform.position)).FirstOrDefault().transform;      
-        Vector3 closestTarget = new Vector3(target.position.x, target.position.y-2, target.position.z);
+    /* Increase Damage PowerUp; Temporary Damage Incres */
+    public void DamageIncrease(int _dmgIncres, float duration) {
+
+        damageIncres = _dmgIncres;
+    }
+
+
+    /* Find Target Closest to You */
+    public Vector3 ClosestTarget() {
+        float shortestDistance = Mathf.Infinity;
+        Vector3 closestTank = new Vector3(), closestTurret = new Vector3(), closestTarget = new Vector3();
+
+        //Find Closest Tank
+        foreach(GameObject tank in tanks){
+            TankHealth tankHealth = tank.GetComponent<TankHealth>(); 
+
+            if(tankHealth && tank.GetComponent<TankHealth>().currentHealth > 0){
+               float distance = (transform.position - tank.transform.position).sqrMagnitude;
+
+               if(shortestDistance > distance){
+                  shortestDistance = distance;
+                  closestTank = tank.transform.position;
+               }
+            }
+        }
+
+        //Find Closest TTurret
+        foreach(GameObject turret in tturrets) {
+            float distance = (transform.position - turret.transform.position).sqrMagnitude;
+
+            if(shortestDistance > distance){
+               shortestDistance = distance;
+               closestTurret = turret.transform.position;
+            }
+        }
+
+
+        //Compare Between Closest Targets
+        float tankDist = (transform.position - closestTank).sqrMagnitude;
+        float turretDist = (transform.position - closestTurret).sqrMagnitude;
+        if(tankDist < turretDist)
+           closestTarget = closestTank;
+        else
+           closestTarget = closestTurret;
+
 
         return closestTarget;
     }
@@ -178,7 +246,7 @@ public class Soldier_FieldOfView : MonoBehaviour {
 
     /* Locate Enemy Hitting You */
     void GettingDamaged(Vector3 target) {
-        setChosenTarget(target);
+        targetPos = target;
 
         Vector3 targetPosition = target;
         Quaternion targetRotation = Quaternion.LookRotation(targetPosition - transform.position, Vector3.up);
@@ -187,28 +255,31 @@ public class Soldier_FieldOfView : MonoBehaviour {
         if(Vector3.Distance(transform.position, target) <= lookDistance){
            if(angle <= 35f)
               startShooting = true;
-
-           if(lockedOn)
-              transform.eulerAngles = new Vector3(targetRotation.eulerAngles.x, targetRotation.eulerAngles.y, 0);
         }
     }
 
 
     /* Soldier Animation States */
-    void AnimationStates(string animState){
+    void setAnimationState(string animState) {
         
         switch(animState) {
 
             case "Idle":
                 animator.SetBool("IsReadyToFire", false);
+                animator.SetBool("IsSprinting", false);
             break;
 
             case "ReadyToFire":
                 animator.SetBool("IsReadyToFire", true);
+                animator.SetBool("IsSprinting", false);
             break;
 
             case "Walk":
                 animator.SetBool("IsShooting", true);
+            break;
+
+            case "Sprint":
+                animator.SetBool("IsSprinting", true);
             break;
         }
     }
@@ -216,29 +287,18 @@ public class Soldier_FieldOfView : MonoBehaviour {
 
     /* Check if Target is on the Map */
     bool isTargetOnMap(Vector3 target) {
-
-        if((target.x < 97 && target.x >= 1) && (target.z < 97 && target.z >= 1))
-            return true;
+        
+        if((target.x <=223 && target.x >= -333) && (target.y < 20 && target.y >= -4) && (target.z <=315 && target.z >= -396))
+           return true;
         else
-            return false;
+           return false;
     }
 
 
-    /* Set Chosen Target */
-    void setChosenTarget(Vector3 _target) {
-
-        if(_target != Vector3.zero)
-           targetPos = _target;
-        else
-           targetPos = transform.position;
-    }
-
-
-    /* Stop All Behaviors */
-    public void SuspendAllBehaviors() {
-        startShooting = false;
-        locateTarget = false;
-        AnimationStates("Dead");
+    /* Terminate All Behaviors */
+    void GameOver() {
+        StopAllCoroutines();
+        setAnimationState("Idle");
     }
 
     
@@ -246,10 +306,21 @@ public class Soldier_FieldOfView : MonoBehaviour {
     void OnTriggerEnter(Collider collid) {
 
         if(collid.tag == "Shot" && !startShooting) {
-           //isGettingShot = true;
-           targetPos = collid.transform.position;
+           gettingDamaged = true;
         }
     }
+
+
+    /* Negate Collision of Like Agents */
+    void OnCollisionEnter(Collision collision) {
+
+        if(collision.collider.tag == "Rocket Brigadier")
+           collision.collider.GetComponent<Rigidbody>().velocity = Vector3.zero;
+    }
+
+
+
+
 
 
 
@@ -257,23 +328,32 @@ public class Soldier_FieldOfView : MonoBehaviour {
 
 
     //---------------------------------------------------- ANIMATION STATES ------------------------------------------------------------------//
-    #region
+    #region  Animation State Commands
 
     /* Shoot Target */
     public void ShootTarget() {
-        Vector3 distance = new Vector3(transform.position.x-ClosestTarget().x, 0, transform.position.z - ClosestTarget().z);
-
-        if(distance.sqrMagnitude <= Mathf.Pow(lookDistance, 2)){
-           startShooting = true;
-           units.StopPath(true);
-        }        
+        startShooting = true;
+        units.setStopPath(true);               
     }
-
 
     /* Stop Shooting */
     public void StandBy() {
         startShooting = false;
-        units.StopPath(false);
+    }
+
+    /* Search Target */
+    public void SearchTarget() {
+        startShooting = false;
+        units.setStopPath(false);
+    }
+
+    /* Stop All Behaviors */
+    public void SuspendAllBehaviors() {
+        inRange = false;
+        startShooting = false;
+        locateTarget = false;
+        units.enabled = false;
+        animator.SetBool("IsReadyToFire", false);
     }
 
     #endregion

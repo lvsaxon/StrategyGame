@@ -42,7 +42,7 @@ public class RespawnManager: MonoBehaviour {
             //Exit Loop if != Vector.Zero
             if(spawnPoint != Vector3.zero){
                index = Random.Range(0, 8);
-               spawnPoint = new Vector3(spawnPoint.x +  offsetX[index], spawnPoint.y, spawnPoint.z + offsetZ[index]);
+               spawnPoint = new Vector3(spawnPoint.x +  offsetX[index], 2.7f, spawnPoint.z + offsetZ[index]);
                yield break;
             }
         }
@@ -62,7 +62,7 @@ public class RespawnManager: MonoBehaviour {
             //Exit Loop if != Vector.Zero
             if(spawnPoint != Vector3.zero){
                index = Random.Range(0, 8);
-               spawnPoint = new Vector3(spawnPoint.x +  offsetX[index], spawnPoint.y, spawnPoint.z + offsetZ[index]);
+               spawnPoint = new Vector3(spawnPoint.x +  offsetX[index], 5f, spawnPoint.z + offsetZ[index]);
                yield break;
             }
         }

@@ -1,66 +1,72 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
 
 public class TankCoordinator: MonoBehaviour {
 
+    public bool squadronFormed;
     public FormationList formationsList;
+    public Maneuvers[] maneuverList;
+    public float soundSpeed, timer;
 
-    Units unit;
-    int squadPosSupply;   
-    GameObject[] tanks;
-    int delta_PosCount, V_PosCount, followerCount = 0;
-    bool prepareToMove, isGroupFormed, callingFollowers;
+    List<Transform> followers;
+    GameObject[] tanks, soldiers;
+    bool prepareToMove, callingFollowers;
+    int delta_PosCount, V_PosCount, followerCount = 0;    
+    int squadPosSupply, maneuverCountTimer; 
        
-    Tank_Follower follower;
-    TankFormationManager formationManager;
+    TDEnemy units;
+    float startingHealth;
+    TankFollower tankFollower;
     
-
+    
     void Awake() {
-        unit = GetComponent<Units>();
-        formationManager = new TankFormationManager();       
+        units = GetComponent<TDEnemy>();
+        followers = new List<Transform>();
         tanks = GameObject.FindGameObjectsWithTag("Tank");
+        soldiers = GameObject.FindGameObjectsWithTag("Rocket Brigadier");
 
-        if(tanks != null){ 
-            foreach(GameObject tank in tanks)
-                 if(tank.name != "tank leader")
-                    follower = tank.GetComponent<Tank_Follower>();
-        }else
-            return;
-        
-        DisableFormationColliders();
-    }
-
-
-    void Start() {
-        prepareToMove = false;
-        V_PosCount = formationsList.VFormation.Length;
-        delta_PosCount = formationsList.deltaFormation.Length;
-            
-        //90% Issue A Formation to Followers
-        if(Random.Range(0, 100) <= 90)
-           ChooseRandomFormation();
-
-        else {
-           setCallingFollowers(false); 
-           setSquadronFormed(false);
-           StartCoroutine("WaitToMove");
+        foreach(GameObject tank in tanks){ 
+            if(tank.name != "CyberTank Leader"){ 
+               followers.Add(tank.transform);
+               followers.Reverse();
+               tankFollower = tank.GetComponent<TankFollower>();
+            }
         }
     }
 
 
-    void Update() {
+    void Start() {
+        V_PosCount = formationsList.VFormation.Length;
+        delta_PosCount = formationsList.deltaFormation.Length;
+            
+        ChooseRandomFormation();
+        //callingSound = true;
+    }
+
+
+    void Update() {       
+        timer+=Time.deltaTime;
+		maneuverCountTimer = (int)timer;
+        int currHealth = GetComponent<TankHealth>().currentHealth;
 
         if(tanks != null){
            if(prepareToMove){
-              setSquadronFormed(true);
-              StartCoroutine("WaitToMove");
+              squadronFormed = true;
+              StartCoroutine("CommandSquadron");
            }
            
-           if(GetComponent<TankHealth>().currentHealth <= 0)
-              setSquadronFormed(false);
+           //30% health left
+           if(currHealth <= GetComponent<TankHealth>().startingHealth * 0.3f){
+              //Call Followers Back
+           }
+
+           if(currHealth <= 0) {
+              squadronFormed = false;
+              StopAllCoroutines();
+           }
+
         }else
             return;
     }
@@ -68,99 +74,87 @@ public class TankCoordinator: MonoBehaviour {
 
     /* Choose a random formation */
     void ChooseRandomFormation() {
-        setCallingFollowers(true);
-        int randomIndex = Random.Range(0, 2);
-        print("Formation#: "+randomIndex);
+        callingFollowers = true;
+        int indx = Random.Range(0, 2);
+        string[] squadForm = {"Delta", "V"};
+        print("Formation#: "+squadForm[indx]);
 
-        //Store 5 formations
-        switch(randomIndex) {
+        switch(indx) {
 
             //Delta Formation
             case 0:
                 squadPosSupply = delta_PosCount;
-                formationManager.StoreFormations("Delta", formationsList.deltaFormation);
+                for(int i=0; i<followers.Count; i++)
+                    followers[i].GetComponent<TankFollower>().PositionRequest_Received("Delta", formationsList.deltaFormation[i]);
                     
-                //Enable DeltaFormation Colliders
-                for(int i=0; i<formationsList.VFormation.Length; i++)
-                    formationsList.deltaFormation[i].GetComponent<Collider>().enabled = true;
             break;
 
             //'V' Formation
             case 1:
                 squadPosSupply = V_PosCount;
-                formationManager.StoreFormations("V", formationsList.VFormation);
+                for(int i=0; i<followers.Count; i++)
+                    followers[i].GetComponent<TankFollower>().PositionRequest_Received("V", formationsList.VFormation[i]);
 
-                //Enable VFormation Colliders
-                for(int i=0; i<formationsList.VFormation.Length; i++)
-                    formationsList.VFormation[i].GetComponent<Collider>().enabled = true;
             break;
         }
     }
 
 
     /* Wait a Few Seconds to Move Squadron */
-    IEnumerator WaitToMove(){
+    IEnumerator CommandSquadron(){
         yield return new WaitForSeconds(0.5f);
-        MoveTeamFormation();
-    }
-
-
-    /*  Move Entire Team */
-    void MoveTeamFormation() {
         
-        if(tanks != null)
-           unit.enabled = true;
-        else
-           return;    
-    }
+        units.enabled = true;
+        int randomTime = Random.Range(6, 12);
+        //Path has Stopped; Get followers in Position
+        if(units.haltPath){
+           yield return new WaitForSeconds(5f);
 
-
-    /* Disable Squad Formation Colliders */
-    void DisableFormationColliders() {
-
-        //Disable Formation Colliders
-        for(int i=0; i<formationsList.VFormation.Length; i++){
-            formationsList.VFormation[i].GetComponent<Collider>().enabled = false;
-            formationsList.deltaFormation[i].GetComponent<Collider>().enabled = false;
+            if(maneuverCountTimer % randomTime == 0){
+               StartCoroutine("FlankingManeuvers", maneuverCountTimer);
+               yield return new WaitForSeconds(maneuverCountTimer);
+            }
         }
     }
 
 
-    /* Return Delta Formation List */
-    public Transform[] DeltaFormation() {
+    /* Call Flanking Maneuvers Every few Seconds */
+    IEnumerator FlankingManeuvers(int waitForCommand) {
+        yield return new WaitForSeconds(waitForCommand);
+        
+        int indx;
+        int flankNum = Random.Range(0, 100);
+        //25% Flank1 chance
+        if(flankNum <= 25f){
+           for(int i=0; i<followers.Count; i++){ 
+               indx = Random.Range(0, 3);
+               //followers[i].GetComponent<Tank_Follower>().PositionRequest_Received("Flank 1", maneuverList[indx].flankPositions[i]);
+            }
+        
+        //52% Flank2 chance
+        }else if(flankNum > 25 && flankNum <= 77f){
+            for(int i=0; i<followers.Count; i++){ 
+                indx = Random.Range(0, 3);
+                //followers[i].GetComponent<Tank_Follower>().PositionRequest_Received("Flank 2", maneuverList[indx].flankPositions[i]);
+            }
 
-        return formationsList.deltaFormation;
-    }
-
-
-    /* Return 'V' Formation List */
-    public Transform[] VFormation() {
-
-        return formationsList.VFormation;
-    }
-
-
-    /* Set if Squadron is Formed */
-    public void setSquadronFormed(bool _isFormed) {
-
-        isGroupFormed = _isFormed;
+        //23% Flank3 chance
+        }else{
+            for(int i=0; i<followers.Count; i++){ 
+                indx = Random.Range(0, 3);
+                //followers[i].GetComponent<Tank_Follower>().PositionRequest_Received("Flank 3", maneuverList[indx].flankPositions[i]);
+            }
+        }
     }
 
 
     /* Return if Squadron isFormed */
     public bool isSquadronFormed() {
 
-        if(isGroupFormed && GetComponent<TankHealth>().currentHealth > 0)
+        if(squadronFormed && GetComponent<TankHealth>().currentHealth > 0)
            return true;
         else
            return false;
-    }
-
-
-    /* Set Condition of Calling for Followers */
-    public void setCallingFollowers(bool _called) {
-
-        callingFollowers = _called;
     }
 
 
@@ -174,7 +168,7 @@ public class TankCoordinator: MonoBehaviour {
     /* Count # of Tanks Inside Collider */  
     void OnTriggerEnter(Collider collid) {
         
-        if(collid.tag == "Tank") { 
+        if(collid.tag == "Tank"){ 
            followerCount++;
            
            if(followerCount == squadPosSupply)
